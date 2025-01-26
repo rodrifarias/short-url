@@ -30,10 +30,11 @@
         }
     },
     "scripts": {
-        "post-root-package-install": [
+        "config-env": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php -r \"file_exists('db/database.sqlite') || touch('db/database.sqlite');\"",
-            "phinx migrate"
+            "phinx migrate",
+            "phinx seed:run"
         ],
         "test": "phpunit",
         "db:migrate": "phinx migrate",

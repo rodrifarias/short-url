@@ -20,6 +20,9 @@
   composer install
 ```
 ```bash 
+  composer config-env
+```
+```bash 
   composer start-dev
 ```
 ### Tests
