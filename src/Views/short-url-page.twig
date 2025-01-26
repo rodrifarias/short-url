@@ -1,0 +1,95 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+    <div class="container has-text-centered" id="url-shortener-container">
+        <h2 class="is-size-2 mb-5">URL Shortener</h2>
+        <div class="field is-grouped">
+            <p class="control is-expanded">
+                <input class="input" type="text" placeholder="URL" id="input-url">
+            </p>
+            <p class="control">
+                <button type="button" class="button is-link" id="btn-create-short-url">Shorten URL</button>
+            </p>
+        </div>
+        <p class="mb-2">
+            <span class="is-hidden" id="origin-url"></span> <br>
+            <a class="is-size-4 is-hidden" href="" target="_blank" id="link-redirect-url"></a>
+        </p>
+        <button class="button is-hidden" id="btn-copy-redirect-url-link">
+            Copy
+        </button>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        (() => {
+            const btnCreateShortUrl = document.getElementById('btn-create-short-url')
+            const btnCopyRedirectUrlLink = document.getElementById('btn-copy-redirect-url-link')
+            const urlInput = document.getElementById('input-url')
+            const linkRedirectUrl = document.getElementById('link-redirect-url')
+            const originUrl = document.getElementById('origin-url')
+
+            const isValidURL = (url) => {
+                try {
+                    new URL(url)
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            const createUrl = async (url) => {
+                const response = await fetch('/api/shorts', {
+                    method: 'POST',
+                    body: JSON.stringify({ origin: url.href }),
+                })
+                return await response.json();
+            }
+
+            btnCopyRedirectUrlLink.addEventListener('click', function () {
+                navigator.clipboard.writeText(this.value);
+                this.innerHTML = 'Copied'
+
+                setTimeout(() => {
+                    this.innerHTML = 'Copy'
+                }, 3000)
+            })
+
+            btnCreateShortUrl.addEventListener('click', async function () {
+                if (!isValidURL(urlInput.value)) {
+                    urlInput.classList.add('is-danger')
+                    urlInput.focus()
+                    return
+                }
+
+                const _this = this
+
+                urlInput.classList.remove('is-danger')
+                linkRedirectUrl.classList.add('is-hidden')
+                btnCopyRedirectUrlLink.classList.add('is-hidden')
+                originUrl.classList.add('is-hidden')
+
+                _this.classList.add('is-loading')
+
+                setTimeout(async function () {
+                    try {
+                        const url = new URL(urlInput.value)
+                        const { redirectUrl } = await createUrl(url)
+                        urlInput.value = ''
+                        _this.classList.remove('is-loading')
+                        linkRedirectUrl.text = redirectUrl
+                        linkRedirectUrl.href = redirectUrl
+                        btnCopyRedirectUrlLink.value = redirectUrl
+                        linkRedirectUrl.classList.remove('is-hidden')
+                        btnCopyRedirectUrlLink.classList.remove('is-hidden')
+                        originUrl.innerHTML = 'Origin: ' + url.href
+                        originUrl.classList.remove('is-hidden')
+                    } catch (error) {
+                        console.error(error.message);
+                    }
+                }, 300)
+            })
+        })();
+    </script>
+{% endblock %}
